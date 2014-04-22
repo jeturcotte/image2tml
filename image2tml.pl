@@ -37,7 +37,7 @@ sub each_layer_tested {
 
 sub tested_image_file(){
 	my $image = shift or dammit("Image file name required!");
-	return Imager->new(file => "$image") or dammit("$_ is not a valid image!");
+	return Imager->new(file => "$image") or dammit("$image is not a valid image!");
 }
 
 sub tested_image_dimensions(){
