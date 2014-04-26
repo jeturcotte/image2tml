@@ -2,7 +2,6 @@ package Ruin {
 
 	use Moose;
 	use Imager;
-	use Colorful qw(panic whine grin);
 	use vars qw($VERSION);
 	
 	$VERSION = 0.01;
@@ -27,16 +26,7 @@ package Ruin {
 		isa => 'Str',
 		trigger => \&_read_and_test_files
 	);
-	
-	has 'rule_count' => (
-		is => 'rw',
-		isa => 'HashRef',
-		default => sub {{
-			'0.0.0' => 0,
-			'255.255.255' => 0
-		}}
-	);
-	
+		
 	has 'rule_id' => (
 		is => 'rw',
 		isa => 'HashRef',
@@ -153,12 +143,12 @@ package Ruin {
 		foreach my $file(@files){
 			my $floc = $self->image_location."/$file";
 			my $i = Imager->new(file => $floc)
-				or panic("$floc is not a valid image!");
+				or die("$floc is not a valid image!");
 				
 			my $x = $i->getwidth;
 			my $y = $i->getheight;
 			if ($self->width and $self->height) {
-				panic("Inconsistent dimensions starting with layer $file!")
+				die("Inconsistent dimensions starting with layer $file!")
 					unless ($x == $self->width and $y == $self->height);
 			} else {
 				$self->width($x);
@@ -171,8 +161,7 @@ package Ruin {
 				foreach my $px(0..$self->width-1){
 					my ($r, $g, $b, undef) = $i->getpixel(x => $px, y => $py)->rgba();
 					my $c = "$r.$g.$b";
-					$self->rule_count->{$c} += 1;
-					$self->rule_id->{$c} = scalar(keys %{$self->rule_id})+1
+					$self->rule_id->{$c} = scalar(keys %{$self->rule_id})
 						unless defined($self->rule_id->{$c});
 					push @row, $self->rule_id->{$c};
 				}
@@ -183,8 +172,7 @@ package Ruin {
 			
 		}
 		
-		$self->dimensions(join(",",($self->width, $self->height, $self->depth)));
-		grin("Ruin successfully initialized a ".$self->dimensions." voxel structure with ".scalar(keys %{$self->rule_id})." rules");
+		$self->dimensions(join(",",($self->depth, $self->width, $self->height)));
 
 	}
 	
@@ -218,7 +206,7 @@ package Ruin {
 			preserve_lava
 			preserve_plants
 		)){
-			push @configs, "$config: ".(ref $self->$config eq 'ARRAY' ? join(",",@{$self->$config}) : $self->$config);
+			push @configs, "$config=".(ref $self->$config eq 'ARRAY' ? join(",",@{$self->$config}) : $self->$config);
 		}
 		return join("\n",@configs);
 	}
@@ -226,7 +214,7 @@ package Ruin {
 	sub _render_rules(){
 		my $self = shift;
 		my @rules;
-		foreach my $rule(1..scalar(keys %{$self->rule_id})){
+		foreach my $rule(1..scalar(keys %{$self->rule_id})-1){
 			push @rules, "rule".$rule."=0,100,".(
 				$rule eq "1" ? "preserveBlock" : "" 
 			);
